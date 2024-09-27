@@ -64,7 +64,7 @@ logs_lock = Lock()
 MAX_LOG_LINES = 1000  # Maximum number of log lines to keep
 
 
-VERBOSE = False  # Set to True to view this scripts logs in the console
+VERBOSE = False  # Set to True to view this script's logs in the console
 
 
 class UsernameListHandler(FileSystemEventHandler):
@@ -228,7 +228,7 @@ async def monitor_process(process, username):
         if exit_code == 1:
             user_status[username] = "Offline"
         elif exit_code == 0:
-            user_status[username] = "Completed"
+            user_status[username] = "Offline"  # Changed from "Completed" to "Offline"
         else:
             user_status[username] = f"Error: Exit code {exit_code}"
     except asyncio.TimeoutError:
@@ -240,7 +240,7 @@ async def monitor_process(process, username):
         if exit_code != 0:
             user_status[username] = f"Error: Exit code {exit_code}"
         else:
-            user_status[username] = "Completed"
+            user_status[username] = "Offline"  # Changed from "Completed" to "Offline"
 
 
 async def monitor_user(username):
@@ -265,11 +265,11 @@ async def monitor_user(username):
 
         # Adjust interval based on user status
         current_status = user_status.get(username, "Unknown")
-        if current_status == "Completed" or current_status.startswith("Error"):
+        if current_status in ["Offline"] or current_status.startswith("Error"):
             # Increase interval but cap it
             interval = min(interval + 60, MAX_INTERVAL)
         else:
-            # Reset interval if the user was live or an error occurred
+            # Reset interval if the user was running or waiting
             interval = MIN_INTERVAL
 
         # Random offset to prevent synchronized requests in subsequent iterations
@@ -309,7 +309,7 @@ def build_layout():
 
     layout.split(
         Layout(name="logs", ratio=1),
-        Layout(name="table", ratio=3),
+        Layout(name="table", ratio=1),
     )
 
     return layout
@@ -318,7 +318,7 @@ def build_layout():
 async def build_logs_panel():
     """Builds the Logs panel."""
     async with logs_lock:
-        logs_text = "\n".join(logs_buffer[-50:])  # Show last 50 lines
+        logs_text = "\n".join(logs_buffer[-25:])  # Show last 25 lines
     return Panel(Text(logs_text, style="white"), title="Logs", border_style="green")
 
 
@@ -353,7 +353,7 @@ def build_status_panel():
             # Apply dynamic styling to the username
             if status == "Running":
                 username_display = f"[green]{username}[/green]"
-            elif status == "Completed":
+            elif status == "Offline":
                 username_display = f"[blue]{username}[/blue]"
             elif status.startswith("Error"):
                 username_display = f"[red]{username}[/red]"
@@ -525,18 +525,6 @@ async def on_username_file_change():
         user_status.pop(username, None)
         user_runtime.pop(username, None)
         user_tasks.pop(username, None)
-
-
-def build_layout():
-    """Builds the Rich layout with Logs and Status Table panels."""
-    layout = Layout()
-
-    layout.split(
-        Layout(name="logs", ratio=3),
-        Layout(name="table", ratio=1),
-    )
-
-    return layout
 
 
 if __name__ == "__main__":
