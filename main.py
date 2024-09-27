@@ -37,8 +37,8 @@ ACTIVE_TASKS = set()  # Track currently running username tasks to avoid duplicat
 WORKING_DIR = Path(__file__).parent.resolve()
 MIN_INTERVAL = 60  # Minimum interval of 1 minute
 MAX_INTERVAL = 300  # Maximum interval of 5 minutes
-LOGS_PER_USER = 3  # Maximum number of log files to keep per user
-MAX_CONCURRENT_DOWNLOADS = 3  # Limit concurrent downloads
+LOGS_PER_USER = 10  # Maximum number of log files to keep per user
+MAX_CONCURRENT_DOWNLOADS = 5  # Limit concurrent downloads
 console = Console()
 
 # Status dictionary for usernames
@@ -134,7 +134,7 @@ async def run_downloader(username):
         "--output",
         str(WORKING_DIR / "downloads" / username),
         "--format",
-        "mp4",
+        "mkv",
     ]
     try:
         async with running_processes_lock:
@@ -337,7 +337,7 @@ def build_status_panel():
             overflow="ellipsis",  # Truncate with ellipsis if content exceeds width
             justify="right",
         )
-        table.add_column("Runtime", style="green", width=10, justify="right")
+        table.add_column("Runtime", style="green", width=10, justify="left")
 
         current_time = time.time()
         for username in sorted(user_status.keys()):
@@ -352,13 +352,15 @@ def build_status_panel():
 
             # Apply dynamic styling to the username
             if status == "Running":
-                username_display = f"[green]{username}[/green]"
+                username_display = f"[green]https://www.tiktok.com/@{username}[/green]"
             elif status == "Offline":
-                username_display = f"[blue]{username}[/blue]"
+                username_display = f"[blue]https://www.tiktok.com/@{username}[/blue]"
             elif status.startswith("Error"):
-                username_display = f"[red]{username}[/red]"
+                username_display = f"[red]https://www.tiktok.com/@{username}[/red]"
             else:
-                username_display = f"[yellow]{username}[/yellow]"
+                username_display = (
+                    f"[yellow]https://www.tiktok.com/@{username}[/yellow]"
+                )
 
             table.add_row(username_display, status, runtime)
 
