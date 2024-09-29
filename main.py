@@ -318,7 +318,7 @@ def build_layout():
 async def build_logs_panel():
     """Builds the Logs panel."""
     async with logs_lock:
-        logs_text = "\n".join(logs_buffer[-25:])  # Show last 25 lines
+        logs_text = "\n".join(logs_buffer[-30:])  # Show last 30 lines
     return Panel(Text(logs_text, style="white"), title="Logs", border_style="green")
 
 
@@ -329,7 +329,13 @@ def build_status_panel():
         table = Table(expand=True)  # Allows the table to expand to the console width
 
         # Add columns without fixed styles for dynamic styling
-        table.add_column("Username", no_wrap=True, justify="left")
+        # Dynamically set the "Usernames (X performers)" where X is the count of usernames
+        total_users = len(user_status.keys())
+        table.add_column(
+            f"Usernames ({total_users} existing users)",
+            no_wrap=True,
+            justify="left",
+        )
         table.add_column(
             "Status",
             style="magenta",
